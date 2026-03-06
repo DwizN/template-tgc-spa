@@ -3,7 +3,7 @@
   "name": "main",
   "target": "branch",
   "source_type": "Repository",
-  "source": "vfourny/template-tcg-spa",
+  "source": "egn-thomas/tcg-spa",
   "enforcement": "active",
   "conditions": {
     "ref_name": {
