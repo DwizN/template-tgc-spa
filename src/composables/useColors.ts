@@ -1,4 +1,4 @@
-import type { PokemonType } from '../types/index.js'
+import type { PokemonType } from '../types/index.ts'
 
 export const COLORS = {
   success: '#18a058',

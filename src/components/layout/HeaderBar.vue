@@ -5,7 +5,8 @@
   >
     <NSpace justify="space-between" align="center" style="height: 56px">
       <NSpace align="center" :size="16">
-        <RouterLink to="/">TCG SPA</RouterLink>
+        <RouterLink :to="ROUTES.HOME">TCG SPA</RouterLink>
+
         <NButton
           tag="a"
           :href="`${apiBaseUrl.replace('/api', '')}/api-docs`"
@@ -15,6 +16,7 @@
         >
           API Docs
         </NButton>
+
         <NButton
           tag="a"
           href="https://making-rerun-61323218.figma.site/"
@@ -25,14 +27,41 @@
           Maquettes
         </NButton>
       </NSpace>
+
       <NSpace align="center" :size="16">
-        <NText depth="3">Renseigner le user connecté ici</NText>
-        <NButton size="small">Déconnexion</NButton>
+        <!-- Username -->
+        <NText depth="3">
+          {{ user?.username }}
+        </NText>
+
+        <!-- Logout -->
+        <NButton size="small" @click="handleLogout"> Déconnexion </NButton>
       </NSpace>
     </NSpace>
   </NLayoutHeader>
 </template>
 
+<script lang="ts">
+export default {
+  name: 'HeaderBar',
+}
+</script>
+
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router'
+
+import { ROUTES } from '@/router'
+import { useAuthStore } from '@/store/auth'
+
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL as string
+
+const authStore = useAuthStore()
+const { user } = storeToRefs(authStore)
+const router = useRouter()
+
+const handleLogout = () => {
+  authStore.logout()
+  router.push(ROUTES.LOGIN)
+}
 </script>

@@ -3,7 +3,7 @@ name: tcg
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: tcg_postgres
+    container_name: tcg_postgres2
     restart: unless-stopped
     environment:
       POSTGRES_USER: tcg_user
@@ -31,6 +31,8 @@ services:
       NODE_ENV: production
       JWT_SECRET: tcg-classroom-secret-key
       DATABASE_URL: postgresql://tcg_user:tcg_password@postgres:5432/tcg_database
+    # Override the original entrypoint to skip the failing seed step and only run migrations + server.
+    entrypoint: ["sh", "-c", "echo \"DATABASE_URL=$$DATABASE_URL\" > /app/.env && npx prisma migrate deploy && node dist/index.js"]
     depends_on:
       postgres:
         condition: service_healthy
