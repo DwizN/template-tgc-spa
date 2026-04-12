@@ -28,6 +28,8 @@
     "vue-router": "4.6.4"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
     "@vfourny/node-toolkit": "1.1.6",
     "@vitejs/plugin-vue": "5.2.4",
     "eslint": "9.39.3",
