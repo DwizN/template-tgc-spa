@@ -2,8 +2,10 @@
 import { defineStore } from 'pinia'
 import { io, type Socket } from 'socket.io-client'
 
+import { useApi } from '@/composables/useApi'
 import router from '@/router'
 import type { Card } from '@/types/card'
+import type { Deck } from '@/types/deck'
 import type { Board, GameServerResponse, GameState, Room } from '@/types/game'
 
 import { useAuthStore } from './auth'
@@ -23,6 +25,9 @@ export const useGameStore = defineStore('game', {
     rooms: [] as Room[],
     gameState: null as GameState | null,
     error: null as string | null,
+    decks: [] as Deck[],
+    allCards: [] as Card[],
+    loadingDecks: false,
   }),
 
   getters: {
@@ -58,6 +63,23 @@ export const useGameStore = defineStore('game', {
   },
 
   actions: {
+    async fetchLobbyData() {
+      const api = useApi()
+      this.loadingDecks = true
+      try {
+        const [decksData, cardsData] = await Promise.all([
+          api.getMyDecks(),
+          api.getAllCards(),
+        ])
+        this.decks = decksData
+        this.allCards = cardsData
+      } catch (e) {
+        console.error(e)
+      } finally {
+        this.loadingDecks = false
+      }
+    },
+
     connect() {
       const auth = useAuthStore()
       if (!auth.token || this.socket?.connected) return
@@ -189,6 +211,12 @@ export const useGameStore = defineStore('game', {
       this.gameState = null
       this.error = null
       this.socket?.emit('getRooms')
+    },
+
+    async deleteDeck(id: number) {
+      const api = useApi()
+      await api.deleteDeck(id)
+      this.decks = this.decks.filter((d) => d.id !== id)
     },
   },
 })

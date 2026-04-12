@@ -34,7 +34,6 @@ const request = async <T>(path: string, options: RequestInit = {}) => {
     )
   }
 
-  // Gérer le cas où DELETE ne renvoie pas de JSON (204 No Content)
   if (res.status === 204) return {} as T
   return res.json() as Promise<T>
 }
@@ -52,7 +51,8 @@ export function useApi() {
       body: JSON.stringify({ email, password, username }),
     })
 
-  const getCards = () => request<Card[]>('/cards')
+  // Renommé ici pour matcher le store
+  const getAllCards = () => request<Card[]>('/cards')
   const getMyDecks = () => request<Deck[]>('/decks/mine')
   const getDeck = (id: string | number) => request<Deck>(`/decks/${id}`)
 
@@ -74,7 +74,7 @@ export function useApi() {
   return {
     signIn,
     signUp,
-    getCards,
+    getAllCards,
     getMyDecks,
     getDeck,
     createDeck,

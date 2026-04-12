@@ -10,12 +10,14 @@ import {
   useDialog,
   useMessage,
 } from 'naive-ui'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { useApi } from '@/composables/useApi'
 import { useGameStore } from '@/stores/game'
 import type { Deck } from '@/types'
+import type { DeckCard } from '@/types/card'
+import type { Card } from '@/types/card'
 
 const api = useApi()
 const gameStore = useGameStore()
@@ -23,20 +25,51 @@ const message = useMessage()
 const dialog = useDialog()
 const router = useRouter()
 
-const decks = ref<Deck[]>([])
+const decks = computed(() => gameStore.decks)
 const loading = ref(true)
 const selectedDeckId = ref<number | null>(null)
+
+const typeColors: Record<string, string> = {
+  Grass: 'bg-green-500',
+  Fire: 'bg-red-500',
+  Water: 'bg-blue-500',
+  Electric: 'bg-yellow-400',
+  Psychic: 'bg-pink-500',
+  Ice: 'bg-cyan-400',
+  Fighting: 'bg-orange-600',
+  Poison: 'bg-purple-500',
+  Ground: 'bg-yellow-600',
+  Flying: 'bg-indigo-400',
+  Bug: 'bg-lime-500',
+  Rock: 'bg-stone-500',
+  Ghost: 'bg-violet-700',
+  Dragon: 'bg-indigo-700',
+  Dark: 'bg-gray-700',
+  Steel: 'bg-slate-400',
+  Normal: 'bg-slate-400',
+}
+
+const getTypeColor = (type: string) => typeColors[type] ?? 'bg-slate-400'
+
+const getDeckThumbnails = (deckCards: DeckCard[]): Card[] => {
+  if (!gameStore.allCards || gameStore.allCards.length === 0) return []
+  return deckCards
+    .map((dc: DeckCard) =>
+      gameStore.allCards.find((c: Card) => c.id === dc.cardId),
+    )
+    .filter((c): c is Card => !!c)
+    .slice(0, 10)
+}
 
 const loadDecks = async () => {
   try {
     loading.value = true
-    const data = await api.getMyDecks()
-    decks.value = data
+    await gameStore.fetchLobbyData()
     if (decks.value.length > 0 && !selectedDeckId.value) {
       selectedDeckId.value = decks.value[0].id
     }
   } catch (e: unknown) {
-    message.error('Impossible de charger les decks')
+    message.error('Impossible de charger les données')
   } finally {
     loading.value = false
   }
@@ -71,8 +104,7 @@ const handleDeleteDeck = (id: number) => {
     negativeText: 'Annuler',
     onPositiveClick: async () => {
       try {
-        await api.deleteDeck(id)
-        decks.value = decks.value.filter((deck) => deck.id !== id)
+        await gameStore.deleteDeck(id)
         message.success('Deck supprimé')
       } catch (e) {
         message.error('Erreur lors de la suppression')
@@ -144,7 +176,6 @@ const handleDeleteDeck = (id: number) => {
               >
                 <p class="text-slate-400 text-sm">Aucune partie disponible.</p>
               </div>
-
               <div v-else class="space-y-3">
                 <div
                   v-for="room in gameStore.rooms"
@@ -171,24 +202,26 @@ const handleDeleteDeck = (id: number) => {
           </NGi>
         </NGrid>
 
-        <div class="flex justify-between items-center mb-4">
+        <!-- Mes decks -->
+        <div class="flex justify-between items-center mb-6">
           <h2 class="text-xl font-bold">Mes decks</h2>
           <NButton
             type="success"
             size="small"
             @click="router.push('/decks/create')"
-            >+ Nouveau</NButton
+            >+ Nouveau deck</NButton
           >
         </div>
 
-        <NGrid responsive="screen" cols="1 s:2 l:3" :x-gap="16" :y-gap="16">
-          <NGi v-for="deck in decks" :key="deck.id">
-            <div
-              class="bg-white border border-slate-200 rounded-xl p-6 flex justify-between items-center h-full"
-            >
-              <span class="text-lg font-semibold text-slate-700">{{
-                deck.name
-              }}</span>
+        <div class="space-y-8">
+          <div
+            v-for="deck in decks"
+            :key="deck.id"
+            class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm"
+          >
+            <!-- Deck header -->
+            <div class="flex justify-between items-center mb-5">
+              <h3 class="text-lg font-bold text-slate-800">{{ deck.name }}</h3>
               <div class="flex gap-2">
                 <NButton
                   secondary
@@ -204,8 +237,59 @@ const handleDeleteDeck = (id: number) => {
                 >
               </div>
             </div>
-          </NGi>
-        </NGrid>
+
+            <!-- Cards grid -->
+            <div
+              v-if="getDeckThumbnails(deck.cards).length > 0"
+              class="flex flex-wrap gap-2"
+            >
+              <div
+                v-for="card in getDeckThumbnails(deck.cards)"
+                :key="card.id"
+                class="bg-slate-50 border border-slate-200 rounded-lg flex items-center gap-2 px-2 py-1.5 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <img
+                  :src="card.imgUrl"
+                  :alt="card.name"
+                  class="h-10 w-10 object-contain flex-shrink-0"
+                />
+                <div class="flex flex-col gap-0.5 min-w-0">
+                  <span class="text-[9px] text-slate-400 font-medium"
+                    >#{{
+                      String(card.pokedexNumber ?? card.id).padStart(3, '0')
+                    }}</span
+                  >
+                  <span
+                    class="text-xs font-bold text-slate-700 truncate leading-tight"
+                    >{{ card.name }}</span
+                  >
+                  <span
+                    class="text-[9px] font-semibold text-white px-1.5 py-0.5 rounded-full w-fit"
+                    :class="getTypeColor(card.type)"
+                  >
+                    {{ card.type }}
+                  </span>
+                  <div
+                    class="flex items-center gap-1.5 text-[9px] text-slate-500 font-medium"
+                  >
+                    <span
+                      ><span class="text-red-400">♥</span> {{ card.hp }}</span
+                    >
+                    <span class="text-slate-300">·</span>
+                    <span
+                      ><span class="text-slate-400">⚔</span>
+                      {{ card.attack }}</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div v-else class="text-center py-4 text-slate-400 text-sm">
+              Chargement des cartes...
+            </div>
+          </div>
+        </div>
       </NSpin>
     </div>
   </div>
