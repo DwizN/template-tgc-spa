@@ -1,15 +1,8 @@
+<!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script setup lang="ts">
-import {
-  NButton,
-  NCard,
-  NEmpty,
-  NSelect,
-  NSpace,
-  NSpin,
-  NTag,
-  useMessage,
-} from 'naive-ui'
+import { NButton, NCard, NSelect, NSpin, useDialog, useMessage } from 'naive-ui'
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import { useApi } from '@/composables/useApi'
 import { useGameStore } from '@/stores/game'
@@ -18,42 +11,42 @@ import type { Deck } from '@/types'
 const api = useApi()
 const gameStore = useGameStore()
 const message = useMessage()
+const dialog = useDialog()
+const router = useRouter()
 
 const decks = ref<Deck[]>([])
 const loading = ref(true)
 const selectedDeckId = ref<number | null>(null)
 
-onMounted(async () => {
+const loadDecks = async () => {
   try {
-    // RG2 : Chargement initial
+    loading.value = true
     const data = await api.getMyDecks()
     decks.value = data
-
-    if (decks.value.length > 0) {
+    if (decks.value.length > 0 && !selectedDeckId.value) {
       selectedDeckId.value = decks.value[0].id
     }
-
-    // RG1 : Connexion Socket.io authentifiée
-    gameStore.connect()
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (e: unknown) {
     message.error('Impossible de charger les decks')
   } finally {
     loading.value = false
   }
-})
-
-// RG3 : Créer une room
-const handleCreate = () => {
-  if (selectedDeckId.value) {
-    gameStore.createRoom(selectedDeckId.value)
-  } else {
-    message.warning("Veuillez sélectionner un deck d'abord")
-  }
 }
 
-// RG4 : Rejoindre une room existante
+onMounted(async () => {
+  await loadDecks()
+  gameStore.connect()
+})
+
+const handleCreate = async () => {
+  if (!selectedDeckId.value) {
+    message.warning("Veuillez sélectionner un deck d'abord")
+    return
+  }
+  // On vérifie si c'est bien un deck valide (10 cartes) via l'erreur socket plus tard
+  gameStore.createRoom(selectedDeckId.value)
+}
+
 const handleJoin = (roomId: string) => {
   if (selectedDeckId.value) {
     gameStore.joinRoom(roomId, selectedDeckId.value)
@@ -61,114 +54,141 @@ const handleJoin = (roomId: string) => {
     message.warning("Veuillez sélectionner un deck d'abord")
   }
 }
+
+const handleDeleteDeck = (id: number) => {
+  dialog.warning({
+    title: 'Supprimer le deck',
+    content: 'Êtes-vous sûr de vouloir supprimer ce deck ?',
+    positiveText: 'Supprimer',
+    negativeText: 'Annuler',
+    onPositiveClick: async () => {
+      try {
+        await api.deleteDeck(id)
+        decks.value = decks.value.filter((deck) => deck.id !== id)
+        message.success('Deck supprimé')
+      } catch (e) {
+        message.error('Erreur lors de la suppression')
+      }
+    },
+  })
+}
 </script>
 
 <template>
-  <div class="p-8 max-w-6xl mx-auto min-h-screen">
-    <div class="flex justify-between items-center mb-8">
-      <div>
-        <h1 class="text-4xl font-black text-slate-800 tracking-tighter italic">
-          TCG LOBBY
+  <div class="min-h-screen bg-slate-50 text-slate-800 font-sans p-8">
+    <div
+      class="max-w-6xl mx-auto flex justify-between items-center mb-10 pb-4 border-b border-slate-200"
+    >
+      <div class="flex items-center gap-4">
+        <h1
+          class="text-blue-700 font-bold text-xl uppercase tracking-tighter border-r pr-4 border-slate-300"
+        >
+          TCG SPA
         </h1>
-        <p class="text-slate-500 uppercase text-xs font-bold tracking-widest">
-          Arène de combat Pokémon
-        </p>
+        <span class="text-slate-400 text-sm font-medium">Lobby</span>
       </div>
-      <NButton secondary type="primary" @click="$router.push('/decks/create')">
-        + CRÉER UN DECK
-      </NButton>
+      <NButton secondary size="small" round>Déconnexion</NButton>
     </div>
 
-    <NSpin :show="loading">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <NCard
-          title="1. Ton Deck"
-          hoverable
-          class="shadow-md border-t-4 border-blue-500"
-        >
-          <NSpace vertical size="large">
-            <p class="text-gray-500 text-sm italic">
-              Sélectionne ton deck de 10 cartes avant de lancer un défi.
-            </p>
+    <div class="max-w-6xl mx-auto">
+      <h2 class="text-2xl font-bold mb-8">Jouer</h2>
 
-            <NSelect
-              v-model:value="selectedDeckId"
-              :options="decks.map((d) => ({ label: d.name, value: d.id }))"
-              placeholder="Choisir un deck..."
-            />
-
-            <div
-              v-if="decks.length === 0 && !loading"
-              class="text-center p-4 bg-orange-50 rounded-lg"
-            >
-              <p class="text-orange-600 text-xs font-bold">
-                Attention : Tu dois avoir au moins un deck pour jouer.
-              </p>
-            </div>
-
-            <NButton
-              type="primary"
-              block
-              size="large"
-              :disabled="!selectedDeckId"
-              class="font-black"
-              @click="handleCreate"
-            >
-              CRÉER UN SALON
-            </NButton>
-          </NSpace>
-        </NCard>
-
-        <NCard
-          title="2. Défis en cours"
-          class="md:col-span-2 shadow-md border-t-4 border-green-500"
-        >
-          <div v-if="gameStore.rooms.length === 0" class="py-12 text-center">
-            <NEmpty description="Aucun salon disponible pour le moment..." />
-            <p class="text-slate-400 text-xs mt-2">
-              Crée le premier salon pour attendre un adversaire !
-            </p>
-          </div>
-
-          <div
-            v-for="room in gameStore.rooms"
-            :key="room.id"
-            class="flex justify-between items-center p-5 border-2 rounded-xl bg-white hover:border-blue-400 transition-all shadow-sm"
+      <NSpin :show="loading">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+          <NCard
+            title="Créer une partie"
+            class="shadow-sm rounded-xl border-none"
           >
-            <div>
-              <p class="font-bold text-lg text-slate-700 font-mono">
-                #{{ String(room.id).slice(0, 8).toUpperCase() }}
-              </p>
-              <NTag
-                :type="(room.players?.length || 0) < 2 ? 'success' : 'warning'"
-                round
-                size="small"
-                class="font-bold"
+            <div class="space-y-4">
+              <NSelect
+                v-model:value="selectedDeckId"
+                :options="decks.map((d) => ({ label: d.name, value: d.id }))"
+                placeholder="Sélectionner un deck"
+              />
+              <NButton
+                type="success"
+                ghost
+                :disabled="!selectedDeckId"
+                @click="handleCreate"
               >
-                {{ room.players?.length || 0 }} / 2 JOUEURS
-              </NTag>
+                Créer la partie
+              </NButton>
+            </div>
+          </NCard>
+
+          <NCard
+            title="Parties disponibles"
+            class="shadow-sm rounded-xl border-none"
+          >
+            <div
+              v-if="gameStore.rooms.length === 0"
+              class="py-10 text-center border-2 border-dashed border-slate-100 rounded-xl"
+            >
+              <p class="text-slate-400 text-sm">Aucune partie disponible.</p>
             </div>
 
-            <NButton
-              secondary
-              type="info"
-              size="large"
-              :disabled="!selectedDeckId || (room.players?.length || 0) >= 2"
-              class="font-bold"
-              @click="handleJoin(room.id)"
-            >
-              REJOINDRE
-            </NButton>
+            <div v-else class="space-y-3">
+              <div
+                v-for="room in gameStore.rooms"
+                :key="room.id"
+                class="p-4 border border-slate-100 rounded-lg bg-white flex flex-col gap-2"
+              >
+                <div class="flex justify-between items-center">
+                  <span class="font-bold text-sm">Partie #{{ room.id }}</span>
+                  <span class="text-[10px] text-slate-400 font-mono">{{
+                    String(room.id).slice(0, 5)
+                  }}</span>
+                </div>
+                <NButton
+                  type="success"
+                  size="small"
+                  ghost
+                  :disabled="!selectedDeckId"
+                  @click="handleJoin(String(room.id))"
+                >
+                  Rejoindre
+                </NButton>
+              </div>
+            </div>
+          </NCard>
+        </div>
+
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-bold">Mes decks</h2>
+          <NButton
+            type="success"
+            size="small"
+            @click="router.push('/decks/create')"
+            >+ Nouveau</NButton
+          >
+        </div>
+
+        <div class="grid gap-4">
+          <div
+            v-for="deck in decks"
+            :key="deck.id"
+            class="bg-white border border-slate-200 rounded-xl p-6 flex justify-between items-center"
+          >
+            <span class="text-lg font-semibold text-slate-700">{{
+              deck.name
+            }}</span>
+            <div class="flex gap-2">
+              <NButton
+                secondary
+                size="small"
+                @click="router.push(`/decks/edit/${deck.id}`)"
+                >Modifier</NButton
+              >
+              <NButton
+                type="error"
+                size="small"
+                @click="handleDeleteDeck(deck.id)"
+                >Supprimer</NButton
+              >
+            </div>
           </div>
-        </NCard>
-      </div>
-    </NSpin>
+        </div>
+      </NSpin>
+    </div>
   </div>
 </template>
-
-<style scoped>
-.hover\:border-blue-400:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
-}
-</style>

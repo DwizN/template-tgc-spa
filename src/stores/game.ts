@@ -12,6 +12,11 @@ interface SocketError {
   message: string
 }
 
+interface ServerResponse {
+  id?: string
+  error?: string
+}
+
 export const useGameStore = defineStore('game', {
   state: () => ({
     socket: null as Socket | null,
@@ -85,6 +90,7 @@ export const useGameStore = defineStore('game', {
       })
 
       this.socket.on('roomsList', (rooms: Room[]) => {
+        console.log('🏠 Liste reçue :', rooms)
         this.rooms = rooms
       })
 
@@ -136,9 +142,17 @@ export const useGameStore = defineStore('game', {
     },
 
     createRoom(deckId: number) {
-      if (!this.socket?.connected) return
-      console.log('📤 Envoi deckId:', deckId)
-      this.socket.emit('createRoom', deckId)
+      if (!this.socket) return
+      const payload = { deckId: Number(deckId) }
+
+      this.socket.emit('createRoom', payload, (response: ServerResponse) => {
+        if (response.error) {
+          console.error('Erreur serveur:', response.error)
+        } else {
+          console.log('Room créée avec succès')
+          this.socket?.emit('getRooms')
+        }
+      })
     },
 
     joinRoom(roomId: string, deckId: number) {
