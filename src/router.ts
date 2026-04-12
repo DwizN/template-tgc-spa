@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import HomePage from './HomePage.vue'
 import { useAuthStore } from './stores/auth'
 
 export const ROUTES = {
@@ -8,10 +7,16 @@ export const ROUTES = {
   LOGIN: '/login',
   REGISTER: '/register',
   CREATE_DECK: '/decks/create',
+  GAME: '/game',
 } as const
 
 const routes = [
-  { path: ROUTES.HOME, component: HomePage, meta: { requiresAuth: true } },
+  {
+    path: ROUTES.HOME,
+
+    component: () => import('./pages/HomePage.vue'),
+    meta: { requiresAuth: true },
+  },
   {
     path: ROUTES.LOGIN,
     component: () => import('./pages/LoginPage.vue'),
@@ -25,6 +30,11 @@ const routes = [
   {
     path: ROUTES.CREATE_DECK,
     component: () => import('./views/CreateDeckView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: ROUTES.GAME,
+    component: () => import('./pages/GamePage.vue'),
     meta: { requiresAuth: true },
   },
 ]

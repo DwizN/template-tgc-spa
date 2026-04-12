@@ -15,7 +15,15 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="flex flex-wrap gap-6 justify-center p-6 bg-gray-50 rounded-xl">
+  <div
+    class="grid-container"
+    style="
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    "
+  >
     <BaseCard
       v-for="card in props.cards"
       :key="card.id"

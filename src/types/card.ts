@@ -19,9 +19,11 @@ export type PokemonType =
   | 'Fairy'
 
 export interface Card {
+  image: string
   id: number
   name: string
   hp: number
+  currentHp?: number
   attack: number
   type: PokemonType
   pokedexNumber: number

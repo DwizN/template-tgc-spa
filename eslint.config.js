@@ -8,6 +8,8 @@ export default [
       'import/no-default-export': 'off',
       // Le projet utilise des imports relatifs (pas d'alias @/)
       'no-restricted-imports': 'off',
+      // Permet les composants avec un seul mot
+      'vue/multi-word-component-names': 'off',
     },
   },
 ]

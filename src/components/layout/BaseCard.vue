@@ -13,12 +13,13 @@ const props = defineProps<{
 
 const typeColor = computed(() => {
   const colors: Record<string, string> = {
-    Fire: 'bg-red-500',
-    Water: 'bg-blue-500',
+    Fire: 'bg-orange-500',
+    Water: 'bg-blue-400',
     Grass: 'bg-green-500',
     Electric: 'bg-yellow-400',
     Psychic: 'bg-purple-500',
-    Normal: 'bg-gray-400',
+    Normal: 'bg-stone-400',
+    Bug: 'bg-lime-500',
   }
   return colors[props.card.type] || 'bg-slate-500'
 })
@@ -26,56 +27,84 @@ const typeColor = computed(() => {
 
 <template>
   <div
-    class="relative border-2 rounded-xl p-3 bg-white transition-all shadow-sm h-full"
-    :class="[
-      size === 'sm' ? 'w-32 text-xs' : 'w-48 text-sm',
-      isSelected
-        ? 'border-yellow-400 ring-2 ring-yellow-200 scale-105 z-10'
-        : 'border-gray-200',
-      isDisabled && !isSelected
-        ? 'opacity-40 grayscale pointer-events-none'
-        : 'cursor-pointer',
-    ]"
+    class="card-item"
+    style="
+      width: 100%;
+      max-width: 200px;
+      min-height: 280px;
+      border-radius: 12px;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: all 0.2s;
+    "
+    :style="{
+      border: isSelected ? '3px solid #10b981' : '2px solid #e5e7eb',
+      backgroundColor: isSelected ? '#f0fdf4' : '#ffffff',
+      opacity: isDisabled && !isSelected ? '0.5' : '1',
+      cursor: isDisabled && !isSelected ? 'not-allowed' : 'pointer',
+    }"
   >
-    <div class="relative overflow-hidden rounded bg-gray-100">
-      <span
-        class="absolute top-0 left-0 bg-black/70 text-white text-[10px] px-1 rounded-br z-20"
-      >
-        #{{ card.pokedexNumber }}
-      </span>
+    <span style="font-size: 10px; color: #9ca3af"
+      >#{{ card.pokedexNumber }}</span
+    >
+
+    <div
+      style="
+        height: 100px;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 10px 0;
+      "
+    >
       <img
-        :src="card.imgUrl"
+        :src="card.image || card.imgUrl"
         :alt="card.name"
-        class="w-full h-32 object-contain"
+        style="max-height: 100%; max-width: 100%; object-fit: contain"
       />
     </div>
 
-    <div class="font-bold truncate mt-2 text-center">{{ card.name }}</div>
-
-    <div class="flex justify-between items-center mt-2">
-      <span
-        :class="[
-          'px-2 py-0.5 rounded-full text-[10px] text-white font-bold',
-          typeColor,
-        ]"
-      >
-        {{ card.type }}
-      </span>
-      <span class="text-red-600 font-bold text-[10px]">{{ card.hp }} HP</span>
-    </div>
-
-    <div class="mt-2 text-[10px] text-gray-500 border-t pt-2 italic">
-      Attaque : {{ card.attack }}
+    <div
+      style="
+        font-weight: bold;
+        color: #1f2937;
+        margin-bottom: 5px;
+        text-align: center;
+        font-size: 14px;
+      "
+    >
+      {{ card.name }}
     </div>
 
     <div
-      v-if="currentHp !== undefined"
-      class="w-full bg-gray-200 h-1.5 mt-2 rounded-full overflow-hidden"
+      :class="typeColor"
+      style="
+        padding: 2px 8px;
+        border-radius: 4px;
+        color: white;
+        font-size: 10px;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      "
     >
-      <div
-        class="bg-green-500 h-full"
-        :style="{ width: `${(currentHp / card.hp) * 100}%` }"
-      ></div>
+      {{ card.type }}
+    </div>
+
+    <div
+      style="
+        display: flex;
+        gap: 15px;
+        margin-top: auto;
+        font-size: 12px;
+        font-weight: bold;
+      "
+    >
+      <div style="color: #ef4444">❤️ {{ card.hp }}</div>
+      <div style="color: #6b7280">⚔️ {{ card.attack }}</div>
     </div>
   </div>
 </template>
