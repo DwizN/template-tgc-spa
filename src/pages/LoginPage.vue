@@ -90,10 +90,6 @@ const handleLogin = async () => {
   </div>
 </template>
 
-<script setup lang="ts">
-/* Script répété par erreur dans ton original, je garde la structure propre */
-</script>
-
 <style scoped>
 .auth-page {
   min-height: 100vh;
