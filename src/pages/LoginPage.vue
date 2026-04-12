@@ -1,55 +1,13 @@
-<template>
-  <div class="auth-page">
-    <div class="purple-banner">
-      <h1>Connexion</h1>
-      <p>Page de connexion avec email et mot de passe</p>
-    </div>
-
-    <div class="form-container">
-      <NCard class="login-card">
-        <NSpace vertical size="large">
-          <h2 style="margin: 0">Connexion</h2>
-          <NForm @submit.prevent="handleLogin">
-            <NFormItem label="Email">
-              <NInput
-                v-model:value="form.email"
-                placeholder="votre@email.com"
-              />
-            </NFormItem>
-            <NFormItem label="Mot de passe">
-              <NInput
-                v-model:value="form.password"
-                type="password"
-                placeholder="........"
-                show-password-on="mousedown"
-              />
-            </NFormItem>
-            <NButton
-              type="primary"
-              block
-              attr-type="submit"
-              :loading="loading"
-              color="#18a058"
-            >
-              Se connecter
-            </NButton>
-          </NForm>
-          <div style="text-align: center">
-            Pas encore de compte ?
-            <RouterLink
-              :to="ROUTES.REGISTER"
-              style="color: #335eea; text-decoration: none"
-              >S'inscrire</RouterLink
-            >
-          </div>
-        </NSpace>
-      </NCard>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { useMessage } from 'naive-ui'
+import {
+  NButton,
+  NCard,
+  NForm,
+  NFormItem,
+  NInput,
+  NSpace,
+  useMessage,
+} from 'naive-ui'
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -80,6 +38,62 @@ const handleLogin = async () => {
 }
 </script>
 
+<template>
+  <div class="auth-page">
+    <div class="purple-banner">
+      <h1>Connexion</h1>
+      <p>Page de connexion avec email et mot de passe</p>
+    </div>
+    <div class="form-container w-full max-w-md mx-auto px-4 md:px-0">
+      <NCard class="login-card">
+        <NSpace vertical size="large">
+          <h2 style="margin: 0">Connexion</h2>
+          <NForm @submit.prevent="handleLogin">
+            <NFormItem label="Email">
+              <NInput
+                v-model:value="form.email"
+                placeholder="votre@email.com"
+                size="large"
+              />
+            </NFormItem>
+            <NFormItem label="Mot de passe">
+              <NInput
+                v-model:value="form.password"
+                type="password"
+                placeholder="........"
+                show-password-on="mousedown"
+                size="large"
+              />
+            </NFormItem>
+            <NButton
+              type="primary"
+              block
+              attr-type="submit"
+              :loading="loading"
+              color="#18a058"
+              size="large"
+            >
+              Se connecter
+            </NButton>
+          </NForm>
+          <div style="text-align: center">
+            Pas encore de compte ?
+            <RouterLink
+              :to="ROUTES.REGISTER"
+              style="color: #335eea; text-decoration: none"
+              >S'inscrire</RouterLink
+            >
+          </div>
+        </NSpace>
+      </NCard>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+/* Script répété par erreur dans ton original, je garde la structure propre */
+</script>
+
 <style scoped>
 .auth-page {
   min-height: 100vh;
@@ -98,7 +112,6 @@ const handleLogin = async () => {
   display: flex;
   justify-content: center;
   margin-top: -30px;
-  padding: 0 20px;
 }
 .login-card {
   max-width: 450px;

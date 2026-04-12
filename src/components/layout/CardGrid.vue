@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { NGi, NGrid } from 'naive-ui'
+
 import type { Card } from '@/types'
 
 import BaseCard from './BaseCard.vue'
@@ -15,27 +17,25 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div
-    class="grid-container"
-    style="
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 20px;
-      padding: 20px;
-    "
+  <NGrid
+    responsive="screen"
+    cols="2 s:3 m:4 l:5 xl:6"
+    :x-gap="16"
+    :y-gap="16"
+    class="p-4"
   >
-    <BaseCard
-      v-for="card in props.cards"
-      :key="card.id"
-      :card="card"
-      :is-selected="props.selectedIds.includes(card.id)"
-      :is-disabled="
-        props.maxSelection
-          ? props.selectedIds.length >= props.maxSelection &&
-            !props.selectedIds.includes(card.id)
-          : false
-      "
-      @click="emit('toggle-card', card.id)"
-    />
-  </div>
+    <NGi v-for="card in props.cards" :key="card.id">
+      <BaseCard
+        :card="card"
+        :is-selected="props.selectedIds.includes(card.id)"
+        :is-disabled="
+          props.maxSelection
+            ? props.selectedIds.length >= props.maxSelection &&
+              !props.selectedIds.includes(card.id)
+            : false
+        "
+        @click="emit('toggle-card', card.id)"
+      />
+    </NGi>
+  </NGrid>
 </template>
